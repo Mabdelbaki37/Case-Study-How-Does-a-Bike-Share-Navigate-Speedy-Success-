@@ -1,0 +1,1195 @@
+---
+title: 'Case Study: How Does a Bike-Share Navigate Speedy Success?'
+author: "Mahmoud Abdelbaki"
+date: "2/22/2022"
+output:
+  html_document: default
+Contact: +974- 31140573.
+Mail: mabdelbaki37@gmail.com
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(stringr)
+library(skimr)
+library(janitor)
+library(geodist)
+library(patchwork)
+library(rstudioapi)
+library(reticulate)
+
+
+```
+
+## Scenario.
+
+You are a  data analyst working in the marketing analyst team at Cyclistic, a bike-share company in Chicago. The director of marketing believes the company’s future success depends on maximizing the number of annual memberships. Therefore,
+your team wants to understand how casual riders and annual members use Cyclistic bikes differently. From these insights,your team will design a new marketing strategy to convert casual riders into annual members. But first, Cyclistic executives must approve your recommendations, so they must be backed up with compelling data insights and professional data visualizations.
+
+## Characters and teams.
+
+● Cyclistic: A bike-share program that features more than 5,800 bicycles and 600 docking stations. Cyclistic sets itself
+apart by also offering reclining bikes, hand tricycles, and cargo bikes, making bike-share more inclusive to people with
+disabilities and riders who can’t use a standard two-wheeled bike. The majority of riders opt for traditional bikes; about
+8% of riders use the assistive options. Cyclistic users are more likely to ride for leisure, but about 30% use them to
+commute to work each day.
+● Lily Moreno: The director of marketing and your manager. Moreno is responsible for the development of campaigns
+and initiatives to promote the bike-share program. These may include email, social media, and other channels.
+
+● Cyclistic marketing analytics team: A team of data analysts who are responsible for collecting, analyzing, and reporting data that helps guide Cyclistic marketing strategy. You joined this team six months ago and have been busy
+learning about Cyclistic’s mission and business.
+
+● Cyclistic executive team: The notoriously detail-oriented executive team will decide whether to approve the recommended marketing program.
+
+
+
+#### Moreno has assigned you a question to answer: How do annual members and casual riders use Cyclistic bikes differently during Quarter No.2 for year 2020?
+  
+You will produce a report with the following deliverables :
+1. A clear statement of the business task
+2. A description of all data sources used
+3. Documentation of any cleaning or manipulation of data
+4. A summary of your analysis
+5. Supporting visualizations and key findings
+6. Your top three recommendations based on your analysis.
+
+
+# Solution with R programming lanuguage.
+
+
+
+### 1. Business Task:
+
+
+Prepare, Clean, analyze the given data and Visualize the outcomes  to  answer the question 'How do annual members and casual riders use Cyclistic bikes differently? *During Quarter 2  for year 2020*.
+
+
+
+### 2. Description of all data sources used.
+
+
+##### 2.1 Descriptiption of data period, volume, Source and Licence.
+
+
+Data Period   : From 2020-04-01 to 2020-06-30.
+
+No of Rows    : 628,055.
+
+No of Columns : 13.
+
+Data Source   : <https://ride.divvybikes.com/>
+
+Source Licence:	<https://ride.divvybikes.com/data-license-agreement>.
+
+
+
+##### 2.2 Evaluating the data credibility and integrity.
+
+
+Is data biased        ? Yes, almost 13.5 % of the data are for canceled trips, this can lead to wrong conclusions.
+                                    
+
+Is data reliable      ? Yes, but needs very good cleaning process. 
+
+Is data original      ? Yes, first party.
+
+Is data Comprehensive ? Not fully, focused on the direct activity movement without mentioning the financial, auxiliary , bikes numbers or maintenance records.
+
+Is data Current       ? Yes.
+
+Is Data Cited         ? Yes.
+
+
+**Can you answer the planned questions?  Yes.**
+
+
+
+###  3.Documentation of any cleaning or manipulation of data.
+
+
+##### 3.1 Exective summary for the cleaning process.
+
+
+
+
+1. 83,000 invalid transactions related to canceled trips *detected* in the data.
+
+2. 888 not fully available data.
+
+3. 691 errors in the date of trips.
+
+4. 30 errors in the stations name.
+
+5. 2 errors in the station id number.
+
+6. extracting new 12 factors from the data like, destination, duration and speed.
+
+7. Building new data set for the stations and populating the right name to the data.
+
+8. Run 6-tests for the data to figure out the errors and bais data.
+
+9. Cleaning process was done through 70 code.
+
+
+
+
+##### 3.2 Cleaning and manipulation steps summary.
+
+
+
+
+1.Preparing the data for exploration.
+
+2.Identifying/clean primary key and Removing duplicates.
+
+3.Remove un-needed columns.
+
+4.Standardizing the number of strings for factor columns and fix errors if any.
+
+5.working with Non Available (NA) data.
+
+6.Standardizing the date and adding new times factors.
+
+7.Standardizing the Stations ID & Name.
+
+8.Calculating the distance using coordinates (latitude and longitude).
+
+9.Test the data. **In this step we discovered 85,000 error in the data** 
+
+10.excluding all dirty data fortesting again and reporting purposes.
+
+11.Backup cleaned data. 
+
+12.Deleting duplicated columns and sorting the columns to be ready for analysis.
+
+
+
+
+##### 3.3 Cleaning and manipulation process with R programming lanugauge.
+
+
+
+######  1.Preparing the data for exploration.
+
+
+Importing data into "R"
+
+```{r,Importing data into "R" }
+
+M4<-read.csv("C:\\Users\\Mido\\Desktop\\Google data analysis\\Case_Study_1\\Project_Data\\Project_Data\\Organized_data\\202004-divvy-tripdata.csv")
+M5<-read.csv("C:\\Users\\Mido\\Desktop\\Google data analysis\\Case_Study_1\\Project_Data\\Project_Data\\Organized_data\\202005-divvy-tripdata.csv")
+M6<-read.csv("C:\\Users\\Mido\\Desktop\\Google data analysis\\Case_Study_1\\Project_Data\\Project_Data\\Organized_data\\202006-divvy-tripdata.csv")
+
+
+```
+
+
+Checking the column names
+
+```{r, Checking the column names}
+colnames(M4)
+colnames(M5)
+colnames(M6)
+```
+
+Checking if the column names are the same for all files
+
+```{r, Checking if the column names are the same for all files}
+
+colnames(M4) == colnames(M5)
+
+colnames(M5) == colnames(M6)
+```
+
+Framing the column names for any further confirmations.
+
+```{r,Framing the column names for any further confirmations.}
+Cnames <-tibble(colnames(M4),colnames(M5),colnames(M6))
+
+head(Cnames)
+```
+
+
+Checking and framing the type of data for further checking.
+
+```{r}
+datatype<-tibble(sapply(M4,typeof),sapply(M5,typeof),sapply(M6,typeof))
+
+head(datatype)
+```
+
+Have an idea about the total of transactions.
+
+```{r, total of transactions}
+
+data.frame(nrow(M4),nrow(M5),nrow(M6)) %>% apply(FUN = sum, MARGIN=1)
+
+```
+
+All data has the same column names and data type with same sequence,Actually it came from same system.
+
+
+Merging the data into one data frame.
+
+```{r, Merging data}
+df <- bind_rows(M4,M5,M6)
+```
+
+Remove unneeded variables.
+
+```{r}
+rm(Cnames,datatype,M4,M5,M6)
+
+```
+
+**Data already prepared for exploration, Moving to cleaning and manipulation** 
+
+
+
+##### 2. Identifing /clean primary key and Removing duplicates 
+
+Understand the relation between columns is the first key to clean the data, the **primary key** is **ride_id**, by running the below code, we can check if there any duplicates in our data.
+
+```{r}
+skim_without_charts(df)
+```
+
+The n_unique for "ride_id"== to  number of rows ,so no duplicates however we can do further test or techniques!
+
+
+Using group_by and filter.
+
+```{r}
+df %>% 
+  group_by(ride_id, rideable_type) %>%
+   mutate( dup = n()) %>% filter(dup != 1)
+
+
+```
+
+- Zero rows is duplicated, however we can do another test.
+
+
+ Using unique , distinct and n-unique
+
+```{r}
+
+df %>%  unique() %>%  nrow()   ## result = 628055 equal to df rown, so no duplicates.
+df %>%  distinct() %>%  nrow() ## result = 628055 equal to df rown, so no duplicates.
+n_unique(df$ride_id)           ## result = 628055 equal to df rown, so no duplicates.
+
+
+```
+
+
+**The data has no duplicates**
+
+
+##### 3.Remove un-needed column.
+
+We can also remove column "rideable _type" because it has  one variable which is "docked_bike"
+
+Chunk Removed.
+
+**Refer to skim_without_charts(df)**
+
+```{r, include=FALSE}
+skim_without_charts(df)
+
+```
+
+```{r}
+
+df <- df[-(2)]
+
+```
+
+
+##### 4.Standrize the numberof strings for factor columns and fix errors ifany.
+
+The number of characters in ride_id id "16", We need to check i all IDs are matching with the stander.
+
+**Refer to code :skim_without_charts(df)**
+
+```{r, include=FALSE}
+skim_without_charts(df)
+```
+
+The min <int> == max <int> ==16 so no issue with string, however we can go for further tests.
+
+```{r}
+df %>% 
+  select(ride_id) %>%
+  group_by(ride_id) %>%
+   mutate(nch =nchar(ride_id)) %>%
+    filter(nch!=16)
+
+df %>% 
+  select(ride_id) %>%
+  group_by(ride_id) %>%
+  mutate(nch =str_count(ride_id)) %>%
+  filter(nch!=16)
+
+```
+
+Our primary/factor key is standardize.
+
+##### 5.working with Non Avaliable data.
+
+
+```{r,include=FALSE}
+skim_without_charts(df)
+```
+
+Chunk removed
+
+**Refer to code :skim_without_charts(df)**
+
+
+by running this report we know that our Data includes NAs in 4 columns (end_station_name,end_station_id,end_lat,end_lng ) the # 888 of all, We can even go forward with another tests.
+
+```{r}
+sum(is.na(df)) # 2664 , it supposed to be 3552, 888 cells in end_station name considered empty not NA
+
+```
+
+We need to change the empty  to NA.
+
+```{r}
+df$end_station_name [df$end_station_name == ""]<- NA
+
+```
+
+```{r,include=FALSE}
+skim_without_charts(df) ## Al empty cells were defined as NA
+
+```
+
+
+```{r}
+sum(is.na(df)) # now  NAs are 3552
+
+```
+
+
+Framing NA in separate list.
+
+```{r}
+na<-df %>%  filter(is.na(end_station_name )|is.na(end_station_id )|is.na(end_lat)|is.na(end_lng))
+
+```
+
+We can not fill the NAs based on the data on hand since all for same row station name & id are missing and both are depending on each other. in ideal case we should refer the issue to the concern in order to fill to missing and update the file.
+
+Excluding the NAs from our df.
+
+```{r}
+df<-df %>% na.exclude()
+```
+
+
+```{r,include=FALSE}
+skim_without_charts(df) ## No missing or empty.
+```
+
+
+##### 6.Standardizing the date and adding new times factors.
+
+
+
+Changing the day type.
+
+```{r}
+df$started_at <- ymd_hms(df$started_at)  ## Column type frequency:POSIXct 
+df$ended_at   <- ymd_hms(df$ended_at)    ## Column type frequency:POSIXct
+
+```
+
+
+Adding start Month and Week factors.
+
+```{r}
+df<-df %>% mutate( start_month_number = month(started_at), start_month_name = month(started_at, label = TRUE, abbr = FALSE),
+               start_wday_number= wday(started_at), start_wday_name =wday(started_at,label = TRUE,abbr = FALSE))
+
+
+```
+
+
+Adding end Month and Week factors.
+
+
+```{r}
+df<-df %>% mutate( end_month_number = month(ended_at), ended_month_name = month(ended_at, label = TRUE, abbr = FALSE),
+               ended_wday_number= wday(ended_at), ended_Wday_name =wday(ended_at,label = TRUE,abbr = FALSE))
+
+
+
+```
+
+
+Adding started and ended hour during the day.
+
+
+```{r}
+df<-df %>% mutate( started_hour= hour(started_at), ended_hour= hour(ended_at))
+
+
+```
+
+
+Adding started and ended Month-day factors.
+
+```{r}
+df<-df %>% mutate(start_mday= mday(started_at), end_mday= mday(ended_at))
+
+
+```
+
+
+Adding trip duration in minutes.
+
+```{r}
+df<-df %>%  mutate( trip_duration_minutes = (ended_at - df$started_at)/60)
+
+```
+
+
+##### 7.Standardizing the Stations ID & Name.
+
+
+Building a new tables for the stations only where the station ID is primary key
+
+
+
+Extracting the start station informations from the head data.
+
+```{r}
+start_station<-df %>% select(start_station_name,start_station_id) %>%
+       group_by(start_station_name,start_station_id) %>% distinct() %>% arrange(start_station_id) %>% 
+        relocate(start_station_id,.before =start_station_name )
+
+
+colnames(start_station) = c( "ID", "Name")
+
+head(start_station)
+```
+
+
+Extracting the end station informations from the head data.
+
+
+```{r}
+end_station<-df %>% select(end_station_name,end_station_id) %>%
+  group_by(end_station_name,end_station_id) %>% distinct() %>% arrange(end_station_id) %>% 
+  relocate(end_station_id,.before =end_station_name )
+
+colnames(end_station) = c( "ID", "Name") 
+
+head(end_station)
+
+```
+
+Joining the two tables to find out the errors.
+
+```{r}
+Station_tables<-end_station %>%  left_join(start_station,by ="ID")
+
+```
+
+Extracting the string errors in different table.
+
+```{r}
+strerrors<-Station_tables %>%
+  group_by(ID ) %>% mutate(count =n()) %>% 
+  filter(count != 1) 
+
+head(strerrors)
+
+```
+
+
+It's easy now to know the mistakes in stations names, I prefer to fix this way
+
+
+Populate the right station name into our station table.
+
+```{r}
+Station_tables<- mutate(Station_tables, Name.x = recode
+        (.x= Name.x,"Wentworth Ave & Cermak Rd (Temp)" = "Wentworth Ave & Cermak Rd",
+                    "Wood St & Chicago Ave (*)"="Wood St & Chicago Ave",
+                    "Western Ave & Fillmore St (*)"="Western Ave & Fillmore St",
+                    "Stewart Ave & 63rd St (*)"="Stewart Ave & 63rd St",
+                    "Eggleston Ave & 69th St (*)"="Eggleston Ave & 69th St",
+                    "Racine Ave & Washington Blvd (*)"= "Racine Ave & Washington Blvd",
+                    "Damen Ave & Walnut (Lake) St (*)"="Damen Ave & Walnut (Lake) St",
+                    "Leavitt St & Belmont Ave (*)" = "Leavitt St & Belmont Ave"))
+
+```
+
+
+Apply the same string changes into Name.y.
+
+```{r}
+Station_tables<- mutate(Station_tables, Name.y = recode
+                        (.x= Name.y,"Wentworth Ave & Cermak Rd (Temp)" = "Wentworth Ave & Cermak Rd",
+                          "Wood St & Chicago Ave (*)"="Wood St & Chicago Ave",
+                          "Western Ave & Fillmore St (*)"="Western Ave & Fillmore St",
+                          "Stewart Ave & 63rd St (*)"="Stewart Ave & 63rd St",
+                          "Eggleston Ave & 69th St (*)"="Eggleston Ave & 69th St",
+                          "Racine Ave & Washington Blvd (*)"= "Racine Ave & Washington Blvd",
+                          "Damen Ave & Walnut (Lake) St (*)"="Damen Ave & Walnut (Lake) St",                     
+                          "Leavitt St & Belmont Ave (*)" = "Leavitt St & Belmont Ave"))
+
+```
+
+
+Unique and remove duplicates from stations list
+```{r}
+Station_tables <- unique(Station_tables)
+
+tibble(Station_tables)
+
+```
+
+Run  test code to check if still errors.
+
+```{r}
+Station_tables %>%
+  group_by(ID ) %>% mutate(count =n()) %>% 
+  filter(count != 1) 
+
+```
+
+All names were fixed,  we have Unique list for the stations.but, One station founded as end but no start!
+
+```{r}
+head(Station_tables)
+
+```
+
+I think about split the stations name based on sep"&", guessing that before "&" is the name and after is the address 
+
+The problem is station # 5 "State St & Harrison St " , so i will keep as its.
+
+```{r}
+stations <- Station_tables[-(3)]
+
+```
+
+Remove unneeded variables
+
+```{r}
+rm(end_station,start_station,Station_tables)
+
+```
+
+Station # 674 Name Michigan Ave & 71st St has only 5 transaction as end station!
+
+Test the list again for duplicates !!
+
+```{r}
+Dup_station_Name<-stations %>%  group_by(Name.x) %>%  mutate( count = n()) %>%  filter(count !=1)
+
+head(Dup_station_Name)
+```
+
+The new station 674 is duplicated it should be 651 !!!!!
+
+
+Delete the duplication list from stations table.
+
+```{r}
+stations<- stations[-(613),]
+
+```
+
+Fix the wrong station ID in the head data.
+
+```{r}
+df$end_station_id[df$end_station_id == 674] <- 651
+
+```
+
+
+**We have list of stations 612 unique station, we can use to populate the write name and fix the strings in the data**
+
+
+Populate the write station name into head data.
+
+```{r}
+df<-df %>%mutate(StartStationName= stations$Name.x[match(start_station_id,stations$ID)]
+          ,EndStationName=stations$Name.x[match(end_station_id,stations$ID)]) 
+
+```
+
+Checking our work result in the head sheet.
+
+```{r}
+skim_without_charts(df)
+
+```
+
+Success!!  The number of unique(s) in start_station_name & end_station_name changed to 612 :), which equal to our stations list.
+
+##### 8.Calculating the distance using coordinates.
+
+Since we have the coordinates ( latitude and longitude) , we can use to give the data value by calculating the distance.
+
+
+Calculate the distance in meters.
+
+```{r}
+df$trip_distance_mtrs = geodist_vec(x1=df$start_lng,y1=df$start_lat,x2=df$end_lng,y2=df$end_lat,paired = TRUE,measure = "haversine")
+
+```
+
+Calculate the distance in Km and miles.
+
+```{r}
+df<- df %>% mutate( trip_distance_km = trip_distance_mtrs /1000,
+                    trip_distance_mile = trip_distance_mtrs/1609)
+
+
+```
+
+
+##### 9.Test the data.
+
+
+Test the data through durations.
+
+Duration can not be (-), We will run codes to check if there any negative duration.
+
+Chunk Removed
+
+**Refer to skim_without_charts(df)** 
+
+```{r, include=FALSE}
+skim_without_charts(df) ## trip duration has (-)
+
+```
+
+The duration column has negative values which is not logic, will investigate and solve the issue.
+
+```{r}
+df %>%  select(trip_duration_minutes) %>% filter(trip_duration_minutes < 0 ) %>% head()
+
+```
+We have 690 rows with (-) duration which in not possible!!
+
+Farming the errors of duration for checking and investigation.
+
+```{r}
+duration_errors<-df %>%  filter(trip_duration_minutes < 0)
+
+head(duration_errors)
+```
+
+
+Start_date is after end date!, the difference is not high but still need to be fixed
+in actual projects we should refer the issue to file operator in order to fix and provide us with the new data, for project purposes,i will transfer the start in end and vice verca for those rows only.
+
+```{r}
+df$started_at[df$trip_duration_minutes < 0 ] <- duration_errors$ended_at
+df$ended_at[df$trip_duration_minutes < 0 ] <- duration_errors$started_at
+
+```
+
+Re-run the date-time codes
+
+```{r}
+df<-df %>% mutate( start_month_number = month(started_at), start_month_name = month(started_at, label = TRUE, abbr = FALSE),
+                   start_wday_number= wday(started_at), start_wday_name =wday(started_at,label = TRUE,abbr = FALSE))
+
+```
+
+```{r}
+df<-df %>% mutate( end_month_number = month(ended_at), ended_month_name = month(ended_at, label = TRUE, abbr = FALSE),
+                   ended_wday_number= wday(ended_at), ended_Wday_name =wday(ended_at,label = TRUE,abbr = FALSE))
+
+```
+
+```{r}
+df<-df %>% mutate( started_hour= hour(started_at), ended_hour= hour(ended_at))
+
+```
+
+```{r}
+df<-df %>% mutate(start_mday= mday(started_at), end_mday= mday(ended_at))
+
+```
+
+```{r}
+df<-df %>%  mutate( trip_duration_minutes = (ended_at - df$started_at)/60)
+
+```
+
+
+```{r}
+df$trip_duration_minutes <- as.numeric(df$trip_duration_minutes)
+
+```
+
+
+Re-Test the data through the duration.
+
+Chunk removed.
+
+**Refer to :skim_without_charts(df)**
+
+```{r,include=FALSE}
+skim_without_charts(df)
+```
+
+
+Test2, through Distance over duration (Speed).
+
+Speed can not be negative, we will use this to check and test the data.
+
+Adding new column (speed) or mtrpermint.
+
+```{r}
+df<-df %>%  mutate( mtrpermint=trip_distance_mtrs /trip_duration_minutes )
+
+```
+
+Check the data 
+
+Chunk Removed
+
+**Refer to skim_without_charts(df)**
+
+```{r,include=FALSE}
+skim_without_charts(df)
+
+```
+
+It seems that data contain misleading rows, The mean of new column is id "inf" and SD is "NAN" also includes NAs.
+
+Check the new NA data in the new column
+
+```{r}
+df[is.na(df)]
+
+```
+
+We have 9 NA,other than Nan.
+
+
+Framing the NA errors to check and decide.
+
+```{r}
+distance_errors<-df %>%  filter_all(any_vars (is.na(.)))
+
+```
+
+
+The start and end station are the same, since the trip is canceled,  
+
+Its better to remove those rows from our population.
+
+```{r}
+df <- na.omit(df)
+```
+
+Re-run the speed test again.
+
+```{r}
+df<-df %>%  mutate( mtrpermint=trip_distance_mtrs /trip_duration_minutes )
+
+```
+
+Test the data by applying different conditions.
+
+If the speed column is zero so logically distance should be zero too, We will run three test based on this concept to test the data.
+
+```{r}
+distance_errors_2<-df %>%  filter( df$mtrpermint ==0 & df$trip_distance_mtrs > 0)
+
+```
+
+```{r}
+distance_errors_3<-df %>%  filter( df$mtrpermint ==0 & df$trip_duration_minutes > 0)
+
+```
+
+```{r}
+distance_errors_4<-df %>%  filter( df$mtrpermint >0 & df$trip_duration_minutes == 0)
+
+```
+
+We have another big issue **83,296** rows, distance = 0,time >0 i will consider this trip canceled since the start location = end location. 
+
+We will take out from our data to avoid bias.
+
+**BIG NOTE: In Actual projects, such issues should  not just excluded but we need to check the reason behind and solve.**
+
+
+Clean the data again based on the tests.
+
+
+```{r}
+df <- df %>% filter( !(df$mtrpermint ==0 & df$trip_duration_minutes > 0))
+
+```
+
+```{r}
+df<- df %>%  filter (!(df$mtrpermint >0 & df$trip_duration_minutes == 0))
+
+```
+
+
+
+Check the data summary after modifications.
+
+```{r}
+skim_without_charts(df)
+
+```
+
+**The data KIs is good, its now cleaned** 
+
+
+##### 10.framing all dirty data for reporting purposes.
+
+```{r}
+Canceled_Trip <- rbind(distance_errors,distance_errors_2,distance_errors_3,distance_errors_4)
+
+rm(distance_errors,distance_errors_2,distance_errors_3,distance_errors_4)
+
+```
+
+
+Final test the canceled trips, is start station == end station.?
+
+```{r}
+Canceled_Trip %>%  filter( !(Canceled_Trip$start_station_id ==Canceled_Trip$end_station_id)) %>% head()
+
+```
+
+
+```{r}
+Canceled_Trip %>%  filter( !(Canceled_Trip$start_station_id ==Canceled_Trip$end_station_id | Canceled_Trip$mtrpermint >0 & Canceled_Trip$trip_duration_minutes == 0))
+
+```
+
+So, the 83,341 are confirmed as  canceled except 28 rows has distance without duration !!
+
+##### 11.Backup the data.  
+
+
+```{r}
+df2<- df  ### saving backup
+```
+
+
+##### 12.Deleting duplicated columns and sorting the columns.
+
+```{r}
+df<-df[-c(4,6,8,9,10,11)]
+
+```
+
+```{r}
+df<-df %>%  relocate(ride_id,member_casual,start_station_id,StartStationName,end_station_id,EndStationName,.before = started_at)
+df<-df %>%  relocate(started_at,start_mday,start_month_number,start_month_name,start_wday_number,start_wday_name,started_hour, .after =EndStationName  )
+df<-df %>%  relocate(ended_at,end_mday,end_month_number,ended_wday_number,ended_hour, .after =started_at  )
+
+```
+
+Export cleaned and dirty data to be organized.
+```{r}
+write.csv(df,"cleaned_data_Q2_20200.csv")
+write.csv(Canceled_Trip,"canceled_data_Q2_20200.csv")
+write.csv(Dup_station_Name,"wrong_station_ID_Q2_2020.csv")
+write.csv(na,"NA_Q2_20200.csv")
+write.csv(duration_errors,"date_errors_Q2_20200.csv")
+write.csv(strerrors,"station_name_errors_Q2_20200.csv")
+write.csv(stations,"stations_name_id_Q2_2020.csv")
+
+```
+
+Now the cleaning process is finished and documented, Moveing to analysis an visualization.
+
+### 4.A summary of your analysis.
+
+##### 4.1. Exective summary for the analysis.
+
+1.Casual's share is **61 %** of the activity's volume but member's share is **39%**.
+
+
+2.Average trip duration for casual is **2.5 member!!**, Casual = **49 min/trip** but member = **48 min/trip**.
+
+
+3.Each casual trip comes against **1.6** from members.
+
+
+4.**Significant** increase in casual's use of bikes in last week of every month.
+
+
+5.Member has normal/fixed **patterns** all month.
+
+
+6.**Significant** increase for Casual use during **weekends.**
+
+
+7.**Peak Hours** during the day from 10:20 for both.
+
+
+8.Casual average **speed** is **170** mtr/minute, member is **213**.
+
+
+9.Casual's **top five favorite stations** are 35,	176, 90, 141, 144.
+
+
+10.Member's **top five favorite stations** are 176, 300, 211, 110, 56.
+
+
+##### 4.2. Answering **Smart** questions with R Programing language.
+
+Question_1 : What is the share of Casual and member in activity volume ?
+
+Casual's share is 61 % of the activity's volume but member's share is 39%.
+
+
+A)
+
+```{r}
+Answer_1.1<-df %>%  group_by(member_casual )%>% 
+          summarise(TripCount=(n()),AverageDuration=                       
+          mean(trip_duration_minutes),
+         TotDuration_m = sum(trip_duration_minutes), Share_Percentage =    sum(trip_duration_minutes)/sum(df$trip_duration_minutes)*100 ) 
+
+head(Answer_1.1)
+
+```
+
+B) : Answer with data visualization.
+
+```{r}
+Answer_1.1$Share_Percentage <- round(Answer_1.1$Share_Percentage,digits = 0)
+
+
+ggplot(data = Answer_1.1, aes(x=member_casual,y= Share_Percentage))+
+  geom_bar(stat = "identity",width = .3, color = "gray")+geom_text(aes(label=Share_Percentage),vjust=1.6,color="white", size=6)+
+  theme_minimal()+ labs(title ="What is the share of Casual and member in activity volume ?" ,subtitle = "Casual's share is 61 % of the activity's volume." ,caption ="Prepared by : Mahmoud Abdelbaki", x= "User Category", y="Volume share %" )
+
+```
+
+
+Question_2: Why is casual's share is greater than member's share ?
+
+Because, Average trip duration for casual is 2.5 member!!
+
+A)
+
+```{r}
+df %>%  group_by(member_casual )%>% 
+          summarise(TripCount=(n()),AverageDuration= mean(trip_duration_minutes) ,
+             TotDuration_m = sum(trip_duration_minutes), Share_Percentage = sum(trip_duration_minutes)/sum(df$trip_duration_minutes)*100 ) 
+
+46.8/18.9 ## Average trip duration for casual is 2.5 member!!
+
+
+```
+
+B)
+
+```{r}
+Answer_1.1$AverageDuration <- round(Answer_1.1$AverageDuration,digits = 0)
+Answer_1.1$TripCount<- Answer_1.1$TripCount/1000
+Answer_1.1$TripCount<- round(Answer_1.1$TripCount,digits = 0)
+
+```
+
+```{r}
+plot_1.2<-ggplot(data = Answer_1.1, aes(x=member_casual,y= AverageDuration))+
+  geom_bar(stat = "identity",width = .5, color = "gray")+geom_text(aes(label=AverageDuration),vjust=1.6,color="white", size=6)+
+  labs(title = "Average Trip Duration(Minute)",subtitle ="Casual = 2.5 Member !" ,x= "User Category", y= "Average Trip Duration(Minutes)" )
+
+plot_1.3 <-ggplot(data = Answer_1.1, aes(x=member_casual,y= TripCount))+
+  geom_bar(stat = "identity",width = .6, color = "gray")+geom_text(aes(label=TripCount),vjust=1.6,color="white", size=6)+
+  labs(title = "Trips Count (Thouthands)",subtitle ="Member = 1.5 Casual" ,x= "User Category", y= "Trips Count (Thouthands)" )
+
+```
+
+```{r}
+plot_1.2 + plot_1.3+plot_annotation( title = "Why is casual's share is greater than member's share ?", subtitle = "Average trip duration for casual is 2.5 member!!", caption = "Prepared by : Mahmoud bdelbaki" )
+
+```
+
+Question_3 : What is the favorite time/day for both Casual/Member to ride?
+
+During day : Significant increase from 10:20 for both.
+During Month:"Incrementally moving for casual only if we use duration as metric but both has upward moving to the end of month.
+During Week: Weekend for both is (High).
+
+
+3.1.Determining the favorite time in the Month-Day in counts and duration as **indicators** 
+
+A) counts
+```{r}
+Answer_2.1.1<-df %>%  group_by(member_casual,start_mday ) %>% 
+    summarize(Transactions = n()) %>% 
+    pivot_wider(names_from = member_casual,values_from = Transactions) 
+
+head(Answer_2.1.1)
+```
+
+B) Duration.
+```{r}
+Answer_2.1.2<-df %>%  group_by(member_casual,start_mday ) %>% 
+  summarize(Duration = sum(trip_duration_minutes)) %>% 
+  pivot_wider(names_from = member_casual,values_from = Duration) 
+head(Answer_2.1.2)
+```
+
+C) Visualization.
+
+```{r}
+Plot_2.1<-df %>%group_by(member_casual,start_mday ) %>% 
+  summarize(Transactions = n(),Duration = sum(trip_duration_minutes)) %>% ggplot()+geom_line(aes(x=start_mday, y=Transactions,color=member_casual))+scale_color_manual(values = c("black","gray"))+
+ labs(title = "No of Transaction ",subtitle = "Incrementally moving for both", x= "MonthDay (1:30)", y="count of Transactions", color="User Category")+
+  theme(legend.position = "bottom", legend.key.width = unit(.2,"cm"))
+
+Plot_2.2<-df %>%group_by(member_casual,start_mday ) %>% 
+  summarize(Transactions = n(),Duration = sum(trip_duration_minutes)) %>% ggplot()+geom_line(aes(x=start_mday, y=Duration/1000,color=member_casual))+scale_color_manual(values = c("black","gray"))+
+  labs(title = "Durations(Thouthands) ",subtitle = "Incrementally moving casual only ", x= "MonthDay (1:30)", y="Durations(Thouthands)", color="User Category")+
+  theme(legend.position = "none")
+
+
+Plot_2.1 + Plot_2.2+plot_annotation(title = "Favorite time (Month-Day) for both Casual and member ", subtitle = "Significant increase in casual's use last week of every month",caption = "Prepared by : Mahmoud bdelbaki"  )
+
+```
+
+
+3.2.Determining the favorite time in Weekday.
+
+A) Counts.
+
+```{r}
+df %>%  group_by(member_casual,start_wday_number,start_wday_name) %>% 
+       summarize(Transactions = n()) %>% 
+       pivot_wider(names_from = member_casual,values_from = Transactions) 
+
+```
+
+B) Duration.
+
+```{r}
+df %>%  group_by(member_casual,start_wday_number,start_wday_name) %>% 
+  summarize(Duration = sum(trip_duration_minutes)) %>% 
+  pivot_wider(names_from = member_casual,values_from = Duration) 
+
+```
+
+C)Visualization.
+
+```{r}
+Plot_2.2.1<-df %>%  group_by(member_casual,start_wday_number,start_wday_name) %>% 
+  summarize(Transactions = n()) %>% ggplot() + geom_line(aes(x=start_wday_number,y=Transactions/1000,color=member_casual))+scale_color_manual(values = c("black","gray"))+
+  labs(title = "Transaction(K) ",subtitle = "Weekend for both is (High)", x= "WeekDay (1:7)", y="Transactions(K)", color="User Category")+
+  theme(legend.position = "bottom", legend.key.width = unit(.2,"cm"))
+
+
+Plot_2.2.2<-df %>%  group_by(member_casual,start_wday_number,start_wday_name) %>% 
+  summarize(Duration = sum(trip_duration_minutes))%>% ggplot() + geom_line(aes(x=start_wday_number,y=Duration/1000,color=member_casual))+scale_color_manual(values = c("black","gray"))+
+  labs(title = "Duraion (K) ",subtitle = "Significatnt increase for Casual)", x= "WeekDay (1:7)", y="Duration(K)", color="User Category")+
+  theme(legend.position = "none")
+
+Plot_2.2.1 +Plot_2.2.2+plot_annotation(title = "Favorite time (Week-Day) for both Casual and member ", subtitle = "Weekend for both is (High) but there is a Significant increase for Casual",caption = "Prepared by : Mahmoud bdelbaki"  )
+
+
+```
+
+3. Determining the favorite time during the day.
+
+.
+
+```{r}
+df %>%  group_by(member_casual,started_hour) %>% 
+  summarize(Durations = sum(trip_duration_minutes)) %>% 
+  pivot_wider(names_from = member_casual,values_from = Durations) 
+
+
+```
+
+B) Visualization .
+
+
+```{r}
+df %>%  group_by(member_casual,started_hour) %>% 
+  summarize(Durations = sum(trip_duration_minutes)) %>% ggplot(aes(x=started_hour,y=Durations/1000, color=member_casual ))+geom_bar(stat = "identity",width = .6)+ facet_grid(. ~ member_casual)+scale_color_manual(values = c("black","gray"))+
+  theme(legend.position = "none")+labs(title = "The favorite time during the day for both casual and member ",subtitle = "Significatnt increase from 10:20 for both)", x= "DayHours (1:24)", y="Duration(K)",caption = "Prepared by : Mahmoud bdelbaki")
+
+```
+
+
+Question_4 : What is Casual and Member's favorite stations ?
+
+Casual's top five favorite stations are 35,	176, 90, 141, 144.
+Member's top five favorite stations are 176, 300, 211, 110, 56.
+
+
+```{r}
+Answer_3.1<-df %>%  group_by(member_casual,start_station_id,StartStationName) %>% 
+                    summarize(Noof_Transactions = n()) %>%  pivot_wider(names_from = member_casual,values_from = Noof_Transactions) %>% 
+                    mutate(Total = casual + member,
+                    Casul.Perentage = casual/length(df$member_casual[df$member_casual=="casual"])*100,
+                    member.Percentage= member/length(df$member_casual[df$member_casual=="member"])*100,
+                    Total.percentage= Total/length(df$member_casual)*100) %>% arrange(-Total)
+
+### I run above code but issues happened while sorting, will split into two parts
+
+```
+
+```{r}
+Answer_3.1<-df %>%  group_by(member_casual,start_station_id,StartStationName) %>% 
+  summarize(Noof_Transactions = n()) %>%  pivot_wider(names_from = member_casual,values_from = Noof_Transactions) 
+
+Answer_3.1 %>% mutate(Total = casual + member,
+                      Casul.Perentage = casual/length(df$member_casual[df$member_casual=="casual"])*100,
+                      member.Percentage= member/length(df$member_casual[df$member_casual=="member"])*100,
+                      Total.percentage= Total/length(df$member_casual)*100) %>% arrange(-Total)
+
+```
+
+```{r}
+
+Answer_3.1 %>%mutate(Casul.Perentage = casual/length(df$member_casual[df$member_casual=="casual"])*100,) %>%
+              select(start_station_id,casual ,Casul.Perentage ) %>% 
+                    arrange(-casual )
+
+```
+
+```{r}
+Answer_3.1 %>%mutate(member.Percentage= member/length(df$member_casual[df$member_casual=="member"])*100) %>% 
+              select(start_station_id,member ,member.Percentage) %>% 
+                 arrange(-member )
+
+```
+
+
+Question_5 : What is the average distance in meters per minute"Speed"?
+
+Answer:Every minute, Casual moves 170 meters, but member is 213.
+
+```{r}
+df %>%  group_by(member_casual) %>% 
+        summarise(Ave_mtrpermint = mean(mtrpermint)) %>%
+         pivot_wider(names_from =member_casual,values_from = Ave_mtrpermint )
+```
+
+
+
+### 5.Your top three recommendations based on your analysis.
+
+
+
+1.The percentage of **biased** data is about **15%**, which is a very large number, so i recommend conducting an investigation to find out the reasons for this percentage and solve all problems, **if any.**
+
+2.Start a marketing campaign that includes a discount on particular stations with addition of a monthly package that includes an appropriate number of minutes, I think that the way to take the advantage of main essential differences between casual and member which are mainly in average duration and favorite stations.
+
+3.I recommend to start a new analysis project to understand why speed average of casual is very low comparing with member, However both are lower than regular stander which is 275 mtr per mint for **beginners**, unfortunately the data we have can not answer this question.We need to know for ex age, address and job. I think that answering this question will be a big key to the business growth.
